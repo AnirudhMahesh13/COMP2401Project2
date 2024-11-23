@@ -32,10 +32,12 @@ void manager_init(Manager *manager) {
  * @param[in,out] manager  Pointer to the `Manager` to clean.
  */
 void manager_clean(Manager *manager) {
+
     system_array_clean(&manager->system_array);
     resource_array_clean(&manager->resource_array);
     event_queue_clean(&manager->event_queue);
     manager->simulation_running = 0;
+
 }
 
 /**

@@ -25,19 +25,18 @@ static int system_store_resources(System *);
  * @param[in]  event_queue     Pointer to the `EventQueue` for event handling.
  */
 void system_create(System **system, const char *name, ResourceAmount consumed, ResourceAmount produced, int processing_time, EventQueue *event_queue) {
-    //*system = malloc(sizeof(System));
 
+    *system = malloc(sizeof(System));
     (*system)->name = malloc(strlen(name) + 1);
-
-    strcpy((*system) ->name, name);
+    strcpy((*system)->name, name);
     (*system)->consumed = consumed;
     (*system)->produced = produced;
     (*system)->processing_time = processing_time;
     (*system)->event_queue = event_queue;
-
     (*system)->status = STANDARD;
     (*system)->amount_stored = 0;
-    
+
+
 }
 
 /**
@@ -49,11 +48,8 @@ void system_create(System **system, const char *name, ResourceAmount consumed, R
  */
 void system_destroy(System *system) {
 
-    if (system!= NULL){
-        free(system->name);
-        
-        free(system);
-    }
+    free(system->name);
+    free(system);
 
 }
 
@@ -218,9 +214,11 @@ static int system_store_resources(System *system) {
  * @param[out] array  Pointer to the `SystemArray` to initialize.
  */
 void system_array_init(SystemArray *array) {
-    array = calloc(1,sizeof(System));
-    array->size = 0;
-    array->capacity = 1;
+    
+    array->systems = calloc(1,sizeof(System));
+    array->size = 0;      
+    array->capacity = 1;  
+
 }
 
 /**
@@ -231,14 +229,17 @@ void system_array_init(SystemArray *array) {
  * @param[in,out] array  Pointer to the `SystemArray` to clean.
  */
 void system_array_clean(SystemArray *array) {
-    for(int i = 0; i<array->size;i++){
+
+    for (int i = 0; i < array->size; i++) {
         system_destroy(array->systems[i]);
     }
 
     free(array->systems);
-    array->capacity = 0;
+    array->systems = NULL;
     array->size = 0;
-    
+    array->capacity = 0;
+
+
 }
 
 /**
@@ -251,29 +252,23 @@ void system_array_clean(SystemArray *array) {
  * @param[in]     system  Pointer to the `System` to add.
  */
 void system_array_add(SystemArray *array, System *system) {
-    // Temp to store memory if needed
-   
 
-     if (array->size >= array->capacity){
-        System *temp;
-        // New memory with space for 2 times more system
-        temp = calloc((array->capacity)*2,sizeof(System));
+    if (array->size >= array->capacity) {
 
-        // Copy existing systems to new memory
-        for (int i = 0; i < array->size;i++){
-                temp[i] = *array->systems[i];
+        System **temp;
+        temp = calloc(array->capacity*2,sizeof(System));
+
+        for (int i = 0; i < array->size; i++) {
+            temp[i] = array->systems[i];
         }
-        // Free the old memory
-        system_array_clean(array);
 
-        // Updates array to point to the new memory of systems
+        free(array->systems);
         array->systems = temp;
-        
         array->capacity = array->capacity*2;
     }
 
     array->systems[array->size] = system;
     array->size++;
-    
+
 
 }

@@ -17,20 +17,12 @@
  * @param[in]  max_capacity  Maximum capacity of the resource.
  */
 void resource_create(Resource **resource, const char *name, int amount, int max_capacity) {
-   
-    if (resource == NULL || name == NULL){
-        return;
-    }
 
     *resource = malloc(sizeof(Resource));
-
-    (*resource)->name = calloc(sizeof(name)/sizeof(char), sizeof(char));
-    
-    strcpy((*resource) ->name, name -1);
-
+    (*resource)->name = malloc(strlen(name) + 1);
+    strcpy((*resource)->name, name);
     (*resource)->amount = amount;
     (*resource)->max_capacity = max_capacity;
-
 }
 
 /**
@@ -42,10 +34,8 @@ void resource_create(Resource **resource, const char *name, int amount, int max_
  */
 void resource_destroy(Resource *resource) {
 
-    if (resource!=NULL){
-        free(resource->name);
-        free(resource);
-    }
+    free(resource->name);
+    free(resource);
 }
 
 /* ResourceAmount functions */
@@ -72,9 +62,11 @@ void resource_amount_init(ResourceAmount *resource_amount, Resource *resource, i
  * @param[out] array  Pointer to the `ResourceArray` to initialize.
  */
 void resource_array_init(ResourceArray *array) {
+
     array->resources = calloc(1,sizeof(Resource));
     array->size = 0;
     array->capacity = 1;
+
 }
 
 /**
@@ -86,15 +78,18 @@ void resource_array_init(ResourceArray *array) {
  * @param[in,out] array  Pointer to the `ResourceArray` to clean.
  */
 void resource_array_clean(ResourceArray *array) {
-    for(int i = 0; i<array->size;i++){
+
+    for (int i = 0; i < array->size; i++) {
         resource_destroy(array->resources[i]);
     }
 
     free(array->resources);
-    array->capacity = 0;
+    array->resources = NULL;
     array->size = 0;
-   
+    array->capacity = 0;
+
 }
+
 /**
  * Adds a `Resource` to the `ResourceArray`, resizing if necessary (doubling the size).
  *
@@ -105,29 +100,21 @@ void resource_array_clean(ResourceArray *array) {
  * @param[in]     resource  Pointer to the `Resource` to add.
  */
 void resource_array_add(ResourceArray *array, Resource *resource) {
+
+    if (array->size >= array->capacity) {
+
+        Resource **temp;
+        temp = calloc(array->capacity*2,sizeof(Resource));
     
-    if (array->size >= array->capacity){
-        // Temp to store memory if needed
-        Resource *temp;
-
-        // New memory with space for 2 times more resources
-        temp = calloc((array->capacity)*2,sizeof(Resource));
-
-        // Copy existing resources to new memory
-        for (int i = 0; i < array->size;i++){
-                temp[i] = *array->resources[i];
+        for (int i = 0; i < array->size; ++i) {
+            temp[i] = array->resources[i];
         }
-        // Free the old memory
-        resource_array_clean(array);
-
-        // Updates array to point to the new memory of resources
-        *array->resources = temp;
-        
-        array->capacity = array->capacity*2;
+        free(array->resources);
+        array->resources = temp;
+        array->capacity = array->capacity * 2;
     }
 
     array->resources[array->size] = resource;
     array->size++;
-    
 
 }
