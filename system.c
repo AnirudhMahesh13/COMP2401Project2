@@ -26,6 +26,7 @@ static int system_store_resources(System *);
  */
 void system_create(System **system, const char *name, ResourceAmount consumed, ResourceAmount produced, int processing_time, EventQueue *event_queue) {
 
+    // Allocate memory for System and initialize all the values
     *system = malloc(sizeof(System));
     (*system)->name = malloc(strlen(name) + 1);
     strcpy((*system)->name, name);
@@ -47,7 +48,6 @@ void system_create(System **system, const char *name, ResourceAmount consumed, R
  * @param[in,out] system  Pointer to the `System` to be destroyed.
  */
 void system_destroy(System *system) {
-
     free(system->name);
     free(system);
 
@@ -185,7 +185,7 @@ static int system_store_resources(System *system) {
     }
 
     amount_to_store = system->amount_stored;
-
+  
     sem_wait(&produced_resource->mutex);
     // Calculate available space
     available_space = produced_resource->max_capacity - produced_resource->amount;
@@ -218,9 +218,11 @@ static int system_store_resources(System *system) {
  * @param[out] array  Pointer to the `SystemArray` to initialize.
  */
 void system_array_init(SystemArray *array) {
-    
+    // Allocate memory for a sinlge pointer to a System
     array->systems = calloc(1,sizeof(System));
-    array->size = 0;      
+    // Set inital size
+    array->size = 0;   
+    // Set initital capacity   
     array->capacity = 1;  
 
 }
@@ -233,12 +235,15 @@ void system_array_init(SystemArray *array) {
  * @param[in,out] array  Pointer to the `SystemArray` to clean.
  */
 void system_array_clean(SystemArray *array) {
-
+    // Traverse thorugh each system in the array and clean the systems
     for (int i = 0; i < array->size; i++) {
         system_destroy(array->systems[i]);
     }
 
+    // Free the memory allocated for the array 
     free(array->systems);
+
+    // Reset pointers and counters
     array->systems = NULL;
     array->size = 0;
     array->capacity = 0;
@@ -256,33 +261,50 @@ void system_array_clean(SystemArray *array) {
  * @param[in]     system  Pointer to the `System` to add.
  */
 void system_array_add(SystemArray *array, System *system) {
-
+    // Check if array needs resizing
     if (array->size >= array->capacity) {
 
+        // Allocate memory for a new array with double the capacity
         System **temp;
         temp = calloc(array->capacity*2,sizeof(System));
 
+        // Copy the existing systems from the old array to the new array
         for (int i = 0; i < array->size; i++) {
             temp[i] = array->systems[i];
         }
 
+        // Free the memory for the old array and updates the pointer to the new array
         free(array->systems);
         array->systems = temp;
+        // Update the capacity to the new capacity 
         array->capacity = array->capacity*2;
     }
-
+    // Add the new system to the array 
     array->systems[array->size] = system;
+    // Increase the size
     array->size++;
 
 
 }
 
+
+/**
+ * Thread function for system operations
+ * 
+ * Runs the `system_run` function forever until the status is set to `TERMINATE`
+ * 
+ * @param[in] arg Pointer to the `System` passed as `void*`.
+ * 
+*/
 void *system_thread(void *arg){
+    // Cast the input argument to a System pointer
     System *system = (System*)arg;
 
+    // Continues as long as system status is not TERMINATE
     while (system->status!= TERMINATE){
         system_run(system);
     }
 
+    // Exit the thread
     pthread_exit(NULL);
 }

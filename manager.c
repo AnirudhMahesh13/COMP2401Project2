@@ -36,7 +36,6 @@ void manager_clean(Manager *manager) {
     event_queue_clean(&manager->event_queue);
     resource_array_clean(&manager->resource_array);
     system_array_clean(&manager->system_array);
-    //manager->simulation_running = 0;
 
 }
 
@@ -204,12 +203,24 @@ void display_simulation_state(Manager *manager) {
     fflush(stdout);
 }
 
+
+/**
+ * Thread function for managing the simulation
+ * 
+ * Runs the manager_run function forever unless the simulation isn't running
+ * 
+ * @param[in] arg Pointer to the `Manager` passed as void*.
+ * 
+*/
 void *manager_thread(void *arg){
+    // Cast the input argument to a Manager pointer
     Manager *manager = (Manager*)arg;
 
+     // Continues as long as simulation is running
     while(manager->simulation_running){
         manager_run(manager);
     }
 
+    // Exit the thread
     pthread_exit(NULL);
 }

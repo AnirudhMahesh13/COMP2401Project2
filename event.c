@@ -70,28 +70,33 @@ void event_queue_clean(EventQueue *queue) {
  * @param[in]     event  Pointer to the `Event` to push onto the queue.
  */
 void event_queue_push(EventQueue *queue, const Event *event) {
+    // Allocate memory for new node and set it with event data
     EventNode *node = malloc(sizeof(EventNode));
     node->event = *event;
 
+    // Wait for access to the queue 
     sem_wait(&queue->mutex);
 
+    // Used to traverse through the queue to find correct spot for new node
     EventNode *curr = queue->head;
     EventNode *prev = NULL;
 
-   
+   // Traverse through the queue to find the correct spot based on priority
     while(curr!= NULL && curr->event.priority >= node->event.priority){
         prev = curr;
         curr = curr->next;
     }
+
+    // Insert new node at the correct spot in the queue
     node->next = curr;
     if(prev == NULL){
-        queue->head = node;
+        queue->head = node; // Insert at the head if no prev node exist
     }
     else{
-    prev->next = node;
+    prev->next = node; // Link the prev node to the new node
     }
 
-    
+    // Increase size
     queue->size++;
     sem_post(&queue->mutex);
 
@@ -107,19 +112,26 @@ void event_queue_push(EventQueue *queue, const Event *event) {
  * @return               Non-zero if an event was successfully popped; zero otherwise.
  */
 int event_queue_pop(EventQueue *queue, Event *event) {
-    // Temporarily, this only returns 0 so that it is ignored 
-    // during early testing. Replace this with the correct logic.
+   // Wait for access to the queue
     sem_wait(&queue->mutex);
+
+    // Get the first node in the queue
     EventNode *curr = queue->head;
+
+    // If the queue is empty return 0
     if (curr == NULL){
         sem_post(&queue->mutex);
         return 0;
     }
     
+    // Store the veent data from the node
     *event = curr->event;
+    // Update the head to the next head
     queue->head = curr->next;
-    
+
+    // Free the memory for the node we are removing
     free(curr);
+    //Decrease the size
     queue->size--;
     sem_post(&queue->mutex);
     return 1;

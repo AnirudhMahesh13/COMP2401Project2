@@ -17,7 +17,7 @@
  * @param[in]  max_capacity  Maximum capacity of the resource.
  */
 void resource_create(Resource **resource, const char *name, int amount, int max_capacity) {
-
+    // Allocate memory for Resouce and initialize all the values
     *resource = malloc(sizeof(Resource));
     (*resource)->name = malloc(strlen(name) + 1);
     strcpy((*resource)->name, name);
@@ -34,7 +34,6 @@ void resource_create(Resource **resource, const char *name, int amount, int max_
  * @param[in,out] resource  Pointer to the `Resource` to be destroyed.
  */
 void resource_destroy(Resource *resource) {
-    
     sem_destroy(&resource->mutex);
     free(resource->name);
     free(resource);
@@ -64,7 +63,6 @@ void resource_amount_init(ResourceAmount *resource_amount, Resource *resource, i
  * @param[out] array  Pointer to the `ResourceArray` to initialize.
  */
 void resource_array_init(ResourceArray *array) {
-
     array->resources = calloc(1,sizeof(Resource));
     array->size = 0;
     array->capacity = 1;
@@ -80,11 +78,12 @@ void resource_array_init(ResourceArray *array) {
  * @param[in,out] array  Pointer to the `ResourceArray` to clean.
  */
 void resource_array_clean(ResourceArray *array) {
-
+    // Traverse thorugh each system in the array and clean the resources
     for (int i = 0; i < array->size; i++) {
         resource_destroy(array->resources[i]);
     }
 
+    // Free the memory allocated for the array
     free(array->resources);
     array->resources = NULL;
     array->size = 0;
@@ -103,20 +102,27 @@ void resource_array_clean(ResourceArray *array) {
  */
 void resource_array_add(ResourceArray *array, Resource *resource) {
 
+    // Check if array needs resizing
     if (array->size >= array->capacity) {
 
+        // Allocate memory for a new array with double the capacity
         Resource **temp;
         temp = calloc(array->capacity*2,sizeof(Resource));
     
+        // Copy the existing systems from the old array to the new array
         for (int i = 0; i < array->size; ++i) {
             temp[i] = array->resources[i];
         }
+
+        // Free the memory for the old array and updates the pointer to the new array
         free(array->resources);
         array->resources = temp;
+        // Update the capacity to the new capacity 
         array->capacity = array->capacity * 2;
     }
-
+    // Add the new system to the array 
     array->resources[array->size] = resource;
+    // Increase the size
     array->size++;
 
 }

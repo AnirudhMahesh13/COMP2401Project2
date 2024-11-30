@@ -4,28 +4,45 @@
 #include <string.h>
 #include <pthread.h>
 
+
 void load_data(Manager *manager);
 
+
+/**
+ * Initalizes the manager, loads data, and creates threat for multi threading
+ * and manages the running of the stimulation
+ */
 int main(void) {
     Manager manager;
+
+    // Initialize the manager
     manager_init(&manager);
+
+    // Load data into manager
     load_data(&manager);
 
+    // Declare the threads to be used 
     pthread_t manager_threads;
     pthread_t system_threads[manager.system_array.size];
 
+
+    // Create a thread for the manager
     pthread_create(&manager_threads,NULL,manager_thread,&manager);
     
+    // Create the threads for each system
     for (int i = 0; i < manager.system_array.size;++i){
         pthread_create(system_threads +i ,NULL,system_thread,manager.system_array.systems[i]);
     }
 
+    // Wait for the manager thread to complete
     pthread_join(manager_threads,NULL);
 
+    // Wait for all system threads to complete
     for (int i = 0; i < manager.system_array.size;++i){
         pthread_join(system_threads[i],NULL);
     }
    
+   // CLean up resources and sysems in manager
     manager_clean(&manager);
     return 0;
 }
